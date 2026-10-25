@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CraftBoard - Vision Board & Scrapbook</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@400;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f5f0e6;
+            background-image: radial-gradient(#dcd4c5 1px, transparent 1px);
+            background-size: 18px 18px;
+            color: #2d3748;
+        }
+
+        .font-handwriting { font-family: 'Caveat', cursive; }
+        .font-kalam { font-family: 'Kalam', cursive; }
+        .font-serif-title { font-family: 'Playfair Display', serif; }
+
+        .canvas-bg {
+            background-color: #fdfbf7;
+            background-image: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        .pushpin {
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle at 35% 35%, #ff4d4d, #990000);
+            border-radius: 50%;
+            box-shadow: 1px 3px 5px rgba(0,0,0,0.3);
+            position: absolute;
+            z-index: 30;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .pushpin:hover { transform: scale(1.3); }
+
+        .tape {
+            background-color: rgba(243, 229, 185, 0.75);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            backdrop-filter: blur(1px);
+            border-left: 2px dashed rgba(200, 180, 130, 0.4);
+            border-right: 2px dashed rgba(200, 180, 130, 0.4);
+            position: absolute;
+            z-index: 25;
+        }
+
+        .board-item {
+            position: absolute;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .paper-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Smooth transform container for zoom & pan */
+        #zoom-pan-layer {
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        @media print {
+            header, #view-dashboard, .no-print, .zoom-controls { display: none !important; }
+            #view-editor { display: block !important; height: auto !important; }
+            .board-item { break-inside: avoid; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d4c7b5; border-radius: 3px; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden">
+
+    <div id="app" class="h-full w-full flex flex-col">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD LIST BOARD               -->
+        <!-- ========================================== -->
+        <div id="view-dashboard" class="h-full w-full flex flex-col overflow-y-auto">
+            <header class="h-20 bg-white border-b border-amber-100/80 px-8 flex items-center justify-between shrink-0 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow">
+                        VB
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl text-slate-800 tracking-tight">CraftBoard</h1>
+                        <p class="text-xs text-slate-400">Scrapbook & Vision Board Creator</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button id="btn-import-dash" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs transition">
+                        ↑ Import JSON
+                    </button>
+                    <input type="file" id="file-import-input" accept=".json" class="hidden">
+                    
+                    <button id="btn-create-board" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow transition">
+                        + Board Baru
+                    </button>
+                </div>
+            </header>
+
+            <main class="max-w-6xl mx-auto w-full p-8 space-y-8">
+                <div class="bg-[#f7f2e7] border border-amber-200/60 rounded-3xl p-8 relative overflow-hidden shadow-sm">
+                    <div class="inline-block bg-amber-200/60 text-amber-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">
+                        KOLEKSI DREAM BOARD
+                    </div>
+                    <h2 class="text-4xl font-bold font-serif-title text-slate-900 mb-3">
+                        Visualisasikan Impian & Goals Kamu
+                    </h2>
+                    <p class="text-slate-600 max-w-2xl text-sm leading-relaxed">
+                        Buat *scrapbook digital* dengan gaya estetik polaroid, kliping kertas, catat target, dan hubungkan ide-ide impianmu dalam bentuk vision board interaktif.
+                    </p>
+                    <div class="tape w-24 h-6 -top-2 right-12 rotate-3"></div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-600 text-lg">🗂️</span>
+                        <h3 class="font-bold text-slate-800 text-lg">Daftar Board Impian</h3>
+                    </div>
+                    <span id="board-count-badge" class="bg-amber-200/60 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
+                        1 Board
+                    </span>
+                </div>
+
+                <div id="boards-list-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </main>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: CANVAS EDITOR DENGAN ZOOM & PAN    -->
+        <!-- ========================================== -->
+        <div id="view-editor" class="h-full w-full flex flex-col hidden">
+            <!-- Header Action Toolbar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 z-50 shrink-0 shadow-sm no-print">
+                <!-- Left Title -->
+                <div class="flex items-center gap-4">
+                    <input type="text" id="editor-board-title" class="font-bold text-lg font-serif-title text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-600 focus:bg-white px-1 outline-none transition" value="2026 Vision Board">
+                    <span class="text-[11px] text-slate-400 font-medium">Auto-saved</span>
+                </div>
+
+                <!-- Center Adding Tools -->
+                <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto">
+                    <button id="tool-add-polaroid" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                        <span>🖼️</span> + Polaroid
+                    </button>
+                    <button id="tool-add-note" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                        <span>📄</span> + Catatan
+                    </button>
+                    <button id="tool-add-checklist" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                        <span>☑️</span> + Checklist
+                    </button>
+                    <button id="tool-add-badge" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                        <span>🏷️</span> + Kategori
+                    </button>
+                    <button id="tool-add-sticker" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                        <span>😀</span> + Stiker
+                    </button>
+                    <div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+                    <button id="tool-toggle-string" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                        <span>📍</span> Mode Benang
+                    </button>
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="flex items-center gap-2">
+                    <button id="btn-back-dash" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl transition">
+                        ← Kembali ke Daftar
+                    </button>
+                    <button id="btn-export-json-editor" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium text-xs rounded-xl transition">
+                        ↓ Export JSON
+                    </button>
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium text-xs rounded-xl transition">
+                        🖨️ Cetak / PDF
+                    </button>
+                </div>
+            </header>
+
+            <!-- Canvas Workspace Area -->
+            <main id="editor-canvas-wrapper" class="flex-1 relative overflow-hidden canvas-bg cursor-grab active:cursor-grabbing">
+                <!-- Zoom & Pan Container Transform Layer -->
+                <div id="zoom-pan-layer" class="absolute inset-0" style="width: 4000px; height: 3000px;">
+                    <svg id="svg-thread-layer" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+                    <div id="editor-canvas" class="relative w-full h-full"></div>
+                </div>
+
+                <!-- Floating Zoom Controller Buttons -->
+                <div class="zoom-controls absolute bottom-6 right-6 z-50 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-1.5 shadow-lg flex items-center gap-1 no-print">
+                    <button id="btn-zoom-out" title="Zoom Out (-)" class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700 hover:text-amber-800 transition">
+                        −
+                    </button>
+                    <span id="zoom-level-text" class="text-xs font-bold text-slate-700 px-2 min-w-[45px] text-center">100%</span>
+                    <button id="btn-zoom-in" title="Zoom In (+)" class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700 hover:text-amber-800 transition">
+                        +
+                    </button>
+                    <div class="h-4 w-[1px] bg-slate-200 mx-1"></div>
+                    <button id="btn-zoom-reset" title="Reset Tampilan (100%)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
+                        🔍 100%
+                    </button>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MODAL POPUP: DETAIL / CERITA PANJANG       -->
+    <!-- ========================================== -->
+    <div id="modal-journal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-[#fcfaf5] border border-amber-200 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden relative">
+            <div class="px-6 py-4 bg-amber-100/50 border-b border-amber-200/60 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📖</span>
+                    <h3 class="font-bold text-lg font-serif-title text-slate-800">Detail & Cerita Impian</h3>
+                </div>
+                <button id="btn-close-journal" class="text-slate-400 hover:text-slate-700 font-bold text-xl">×</button>
+            </div>
+
+            <div class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Judul / Ringkasan Depan</label>
+                    <input type="text" id="journal-title-input" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-amber-600">
+                </div>
+
+                <div id="journal-image-field" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">URL Gambar Polaroid</label>
+                    <input type="text" id="journal-image-input" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-amber-600" placeholder="https://...">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cerita Panjang / Rencana Aksi / Refleksi</label>
+                    <textarea id="journal-content-input" rows="7" class="w-full p-4 bg-white border border-slate-200 rounded-xl font-kalam text-slate-800 text-lg leading-relaxed focus:outline-none focus:border-amber-600 shadow-inner" placeholder="Tuliskan cerita lengkap dari impian ini..."></textarea>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                <button id="btn-delete-element" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-xl text-xs transition mr-auto">
+                    🗑️ Hapus Elemen
+                </button>
+                <button id="btn-save-journal" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-xs transition shadow">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // PRESET DATA PERTAMA KALI
+        const INITIAL_DATA = [
+            {
+                id: "board_2026",
+                title: "2026 Vision Board",
+                created_at: "25 Okt 2026",
+                connections: [
+                    { from: "item_cat_learning", to: "item_photo_cam" },
+                    { from: "item_photo_cam", to: "item_cat_health" },
+                    { from: "item_cat_health", to: "item_center_main" },
+                    { from: "item_cat_learning", to: "item_cat_career" },
+                    { from: "item_cat_career", to: "item_checklist_career" },
+                    { from: "item_checklist_career", to: "item_photo_work" },
+                    { from: "item_photo_work", to: "item_center_main" }
+                ],
+                items: [
+                    {
+                        id: "item_center_main",
+                        type: "center_board",
+                        x: 350, y: 460, rotation: -1,
+                        title: "2026 VISION BOARD",
+                        content: "Tahun ini adalah tahun untuk tumbuh, belajar hal baru, menjaga kesehatan tubuh, dan mewujudkan impian besar satu per satu!",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_cat_learning",
+                        type: "badge",
+                        x: 180, y: 40, rotation: -2,
+                        title: "LEARNING",
+                        content: "Target pembelajaran harian dan pengembangan skill.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_cat_career",
+                        type: "badge",
+                        x: 530, y: 35, rotation: 3,
+                        title: "CAREER",
+                        content: "Pencapaian karir dan proyek passion.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_cat_health",
+                        type: "badge",
+                        x: 180, y: 520, rotation: -3,
+                        title: "HEALTH",
+                        content: "Menjaga kesehatan fisik dan pikiran.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_photo_cam",
+                        type: "polaroid",
+                        x: 130, y: 110, rotation: -6,
+                        title: "Learn photography and video editing",
+                        image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600",
+                        content: "Pelajari fotografi dan editing video untuk mendokumentasikan perjalanan impian.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_note_growing",
+                        type: "note",
+                        x: 340, y: 130, rotation: -3,
+                        title: "Keep learning, keep growing.",
+                        content: "Jangan pernah berhenti mencoba hal baru dan bertumbuh setiap harinya.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_checklist_career",
+                        type: "checklist",
+                        x: 540, y: 120, rotation: 3,
+                        title: "CAREER GOALS",
+                        content: "☑ Build one personal passion project\n☑ Attend 1 professional workshop per month",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_photo_work",
+                        type: "polaroid",
+                        x: 550, y: 370, rotation: 5,
+                        title: "Focused & creative work space",
+                        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=600",
+                        content: "Bangun lingkungan belajar dan bekerja yang nyaman serta penuh inspirasi.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_sticker_1",
+                        type: "sticker",
+                        x: 470, y: 550, rotation: -4,
+                        title: "😀 DO MORE OF WHAT YOU LOVE",
+                        content: "Lakukan lebih banyak hal yang membuat hatimu merasa hidup.",
+                        has_pin: true
+                    },
+                    {
+                        id: "item_sticker_2",
+                        type: "sticker",
+                        x: 730, y: 260, rotation: 2,
+                        title: "🌟 CHERISH EVERY LITTLE MOMENT",
+                        content: "Hargai setiap proses dan momen kecil dalam hidup.",
+                        has_pin: true
+                    }
+                ]
+            }
+        ];
+
+        let boards = [];
+        let currentBoard = null;
+        let activeConnectingPinId = null;
+        let currentEditingItemId = null;
+
+        // ZOOM & PAN STATE
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let startPanX = 0, startPanY = 0;
+
+        const zoomPanLayer = document.getElementById('zoom-pan-layer');
+        const zoomText = document.getElementById('zoom-level-text');
+        const canvasWrapper = document.getElementById('editor-canvas-wrapper');
+
+        function updateTransform() {
+            zoomPanLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            zoomText.textContent = `${Math.round(scale * 100)}%`;
+            renderThreads();
+        }
+
+        function setZoom(newScale, centerX, centerY) {
+            const minScale = 0.3;
+            const maxScale = 2.5;
+            const targetScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+            if (centerX !== undefined && centerY !== undefined) {
+                const ratio = targetScale / scale;
+                panX = centerX - (centerX - panX) * ratio;
+                panY = centerY - (centerY - panY) * ratio;
+            }
+
+            scale = targetScale;
+            updateTransform();
+        }
+
+        // Mouse Wheel Zoom
+        canvasWrapper.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = canvasWrapper.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const delta = e.deltaY < 0 ? 1.1 : 0.9;
+            setZoom(scale * delta, mouseX, mouseY);
+        }, { passive: false });
+
+        // Panning Canvas Drag
+        canvasWrapper.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
+            isPanning = true;
+            startPanX = e.clientX - panX;
+            startPanY = e.clientY - panY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            panX = e.clientX - startPanX;
+            panY = e.clientY - startPanY;
+            updateTransform();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isPanning = false;
+        });
+
+        // Zoom Buttons
+        document.getElementById('btn-zoom-in').onclick = () => {
+            const rect = canvasWrapper.getBoundingClientRect();
+            setZoom(scale * 1.2, rect.width / 2, rect.height / 2);
+        };
+        document.getElementById('btn-zoom-out').onclick = () => {
+            const rect = canvasWrapper.getBoundingClientRect();
+            setZoom(scale / 1.2, rect.width / 2, rect.height / 2);
+        };
+        document.getElementById('btn-zoom-reset').onclick = () => {
+            scale = 1; panX = 0; panY = 0;
+            updateTransform();
+        };
+
+        // Storage Management
+        function loadData() {
+            const saved = localStorage.getItem('craftboard_app_v2');
+            if (saved) {
+                try { boards = JSON.parse(saved); } catch(e) { boards = INITIAL_DATA; }
+            } else {
+                boards = INITIAL_DATA;
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('craftboard_app_v2', JSON.stringify(boards));
+        }
+
+        const viewDash = document.getElementById('view-dashboard');
+        const viewEdit = document.getElementById('view-editor');
+        const boardsGrid = document.getElementById('boards-list-grid');
+
+        function renderDashboard() {
+            viewDash.classList.remove('hidden');
+            viewEdit.classList.add('hidden');
+
+            document.getElementById('board-count-badge').textContent = `${boards.length} Board`;
+
+            let html = boards.map(b => `
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between relative">
+                    <div class="tape w-16 h-4 -top-2 left-6 rotate-[-3deg]"></div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold font-serif-title text-xl text-slate-800">${b.title}</h4>
+                            <span class="text-xs bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-full">${b.items.length} items</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-6">Dibuat: ${b.created_at || '2026'}</p>
+                    </div>
+                    <div class="flex items-center gap-2 pt-4 border-t border-slate-100">
+                        <button onclick="openBoard('${b.id}')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-xl shadow-sm transition">
+                            Buka Board →
+                        </button>
+                        <button onclick="duplicateBoard('${b.id}')" title="Duplikat" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">📋</button>
+                        <button onclick="deleteBoard('${b.id}')" title="Hapus" class="p-2 text-red-400 hover:text-red-600 rounded-lg">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            html += `
+                <div onclick="createNewBoard()" class="border-2 border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/40 hover:bg-amber-50 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[160px]">
+                    <div class="w-10 h-10 rounded-full bg-amber-200/80 text-amber-800 flex items-center justify-center font-bold text-xl mb-2">+</div>
+                    <h5 class="font-bold text-slate-800 text-sm">Buat Vision Board Baru</h5>
+                    <p class="text-xs text-slate-400 mt-1">Mulai kanvas scrapbook baru</p>
+                </div>
+            `;
+
+            boardsGrid.innerHTML = html;
+        }
+
+        function openBoard(id) {
+            currentBoard = boards.find(b => b.id === id);
+            if (!currentBoard) return;
+
+            document.getElementById('editor-board-title').value = currentBoard.title;
+            viewDash.classList.add('hidden');
+            viewEdit.classList.remove('hidden');
+
+            scale = 1; panX = 0; panY = 0;
+            updateTransform();
+            renderCanvas();
+        }
+
+        function createNewBoard() {
+            const newBoard = {
+                id: 'board_' + Date.now(),
+                title: 'Vision Board Baru ' + (boards.length + 1),
+                created_at: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                connections: [],
+                items: JSON.parse(JSON.stringify(INITIAL_DATA[0].items))
+            };
+            boards.push(newBoard);
+            saveData();
+            openBoard(newBoard.id);
+        }
+
+        function deleteBoard(id) {
+            if (confirm('Hapus board ini?')) {
+                boards = boards.filter(b => b.id !== id);
+                saveData();
+                renderDashboard();
+            }
+        }
+
+        function duplicateBoard(id) {
+            const src = boards.find(b => b.id === id);
+            if (!src) return;
+            const clone = JSON.parse(JSON.stringify(src));
+            clone.id = 'board_' + Date.now();
+            clone.title = src.title + ' (Salinan)';
+            boards.push(clone);
+            saveData();
+            renderDashboard();
+        }
+
+        document.getElementById('btn-back-dash').onclick = () => {
+            saveCurrentBoardState();
+            renderDashboard();
+        };
+
+        document.getElementById('btn-create-board').onclick = createNewBoard;
+
+        const editorCanvas = document.getElementById('editor-canvas');
+        const svgThreadLayer = document.getElementById('svg-thread-layer');
+
+        function renderCanvas() {
+            editorCanvas.innerHTML = '';
+
+            currentBoard.items.forEach(item => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'board-item';
+                wrapper.id = item.id;
+                wrapper.style.left = item.x + 'px';
+                wrapper.style.top = item.y + 'px';
+                wrapper.style.transform = `rotate(${item.rotation || 0}deg)`;
+
+                let html = '';
+
+                if (item.type === 'polaroid') {
+                    html = `
+                        <div class="bg-white p-3 pt-4 pb-4 rounded shadow-md paper-shadow w-56 border border-slate-100 relative">
+                            ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <div class="tape w-16 h-4 -top-3 left-4 rotate-[-4deg]"></div>
+                            <div class="w-full h-40 bg-slate-100 overflow-hidden mb-2.5 rounded-sm border border-slate-200">
+                                <img src="${item.image || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600'}" class="w-full h-full object-cover pointer-events-none" alt="polaroid">
+                            </div>
+                            <h4 class="font-handwriting text-xl text-slate-800 text-center font-bold px-1 mb-1 leading-tight">${item.title}</h4>
+                            <button onclick="openJournalModal('${item.id}')" class="w-full py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded text-[10px] font-semibold transition">
+                                📖 Baca Cerita
+                            </button>
+                        </div>
+                    `;
+                } else if (item.type === 'note') {
+                    html = `
+                        <div class="bg-[#fef3c7] p-4 rounded-sm shadow-md paper-shadow w-56 border border-amber-200 relative">
+                            ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <div class="tape w-16 h-4 -top-3 right-4 rotate-[3deg]"></div>
+                            <h4 class="font-kalam font-bold text-lg text-slate-800 leading-snug mb-2">${item.title}</h4>
+                            <button onclick="openJournalModal('${item.id}')" class="text-[11px] text-amber-900 underline font-semibold block">
+                                📖 Detail Cerita
+                            </button>
+                        </div>
+                    `;
+                } else if (item.type === 'center_board') {
+                    html = `
+                        <div class="bg-white/90 backdrop-blur p-6 rounded-md shadow-lg border-2 border-dashed border-slate-300 w-80 text-center relative">
+                            ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <div class="tape w-20 h-5 -top-3 left-6 rotate-[-2deg]"></div>
+                            <div class="tape w-20 h-5 -top-3 right-6 rotate-[2deg]"></div>
+                            <h2 class="font-serif-title font-bold text-2xl text-slate-900 mb-2 tracking-wide">${item.title}</h2>
+                            <button onclick="openJournalModal('${item.id}')" class="mt-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-semibold transition">
+                                📖 Jurnal Utama
+                            </button>
+                        </div>
+                    `;
+                } else if (item.type === 'checklist') {
+                    html = `
+                        <div class="bg-white p-4 rounded-sm shadow-md paper-shadow w-56 border-t-4 border-amber-600 relative">
+                            ${item.has_pin ? `<div class="pushpin -top-2 right-4" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <h4 class="font-bold text-slate-900 text-xs tracking-wide uppercase mb-2 border-b pb-1">${item.title}</h4>
+                            <div class="font-kalam text-xs text-slate-700 whitespace-pre-line leading-relaxed mb-2">${item.content}</div>
+                            <button onclick="openJournalModal('${item.id}')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition">
+                                📖 Detail
+                            </button>
+                        </div>
+                    `;
+                } else if (item.type === 'badge') {
+                    html = `
+                        <div class="bg-[#ebd9c1] text-slate-900 px-4 py-1.5 rounded font-bold text-xs shadow border border-amber-300/80 relative inline-block tracking-wider uppercase">
+                            ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <span onclick="openJournalModal('${item.id}')" class="cursor-pointer">${item.title}</span>
+                        </div>
+                    `;
+                } else if (item.type === 'sticker') {
+                    html = `
+                        <div class="bg-white/90 text-slate-800 px-3.5 py-1.5 rounded-full font-bold text-xs shadow-md border border-slate-300 relative inline-flex items-center gap-1 cursor-pointer">
+                            ${item.has_pin ? `<div class="pushpin -top-2 -left-1" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
+                            <span onclick="openJournalModal('${item.id}')">${item.title}</span>
+                        </div>
+                    `;
+                }
+
+                wrapper.innerHTML = html;
+                editorCanvas.appendChild(wrapper);
+
+                makeDraggable(wrapper, item);
+            });
+
+            renderThreads();
+        }
+
+        function renderThreads() {
+            svgThreadLayer.innerHTML = '';
+            if (!currentBoard.connections) return;
+
+            currentBoard.connections.forEach(conn => {
+                const elFrom = document.getElementById(conn.from);
+                const elTo = document.getElementById(conn.to);
+
+                if (elFrom && elTo) {
+                    const pinFrom = elFrom.querySelector('.pushpin');
+                    const pinTo = elTo.querySelector('.pushpin');
+
+                    if (pinFrom && pinTo) {
+                        const r1 = pinFrom.getBoundingClientRect();
+                        const r2 = pinTo.getBoundingClientRect();
+                        const layerRect = zoomPanLayer.getBoundingClientRect();
+
+                        const x1 = (r1.left + r1.width/2 - layerRect.left) / scale;
+                        const y1 = (r1.top + r1.height/2 - layerRect.top) / scale;
+                        const x2 = (r2.left + r2.width/2 - layerRect.left) / scale;
+                        const y2 = (r2.top + r2.height/2 - layerRect.top) / scale;
+
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('stroke', '#dc2626');
+                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('stroke-linecap', 'round');
+                        line.setAttribute('style', 'filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));');
+
+                        svgThreadLayer.appendChild(line);
+                    }
+                }
+            });
+        }
+
+        function handlePinClick(e, itemId) {
+            e.stopPropagation();
+            if (!activeConnectingPinId) {
+                activeConnectingPinId = itemId;
+                e.target.style.transform = 'scale(1.4)';
+            } else if (activeConnectingPinId === itemId) {
+                activeConnectingPinId = null;
+                renderCanvas();
+            } else {
+                const idx = currentBoard.connections.findIndex(
+                    c => (c.from === activeConnectingPinId && c.to === itemId) || (c.from === itemId && c.to === activeConnectingPinId)
+                );
+                if (idx >= 0) {
+                    currentBoard.connections.splice(idx, 1);
+                } else {
+                    currentBoard.connections.push({ from: activeConnectingPinId, to: itemId });
+                }
+                activeConnectingPinId = null;
+                saveCurrentBoardState();
+                renderCanvas();
+            }
+        }
+
+        function makeDraggable(el, item) {
+            let isDragging = false, startX, startY, initX, initY;
+
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.pushpin') || e.target.tagName === 'BUTTON') return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initX = item.x;
+                initY = item.y;
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                item.x = Math.max(0, initX + (e.clientX - startX) / scale);
+                item.y = Math.max(0, initY + (e.clientY - startY) / scale);
+                el.style.left = item.x + 'px';
+                el.style.top = item.y + 'px';
+                renderThreads();
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                saveCurrentBoardState();
+            }
+        }
+
+        document.getElementById('tool-add-polaroid').onclick = () => {
+            currentBoard.items.push({
+                id: 'item_' + Date.now(),
+                type: 'polaroid',
+                x: 300, y: 200,
+                rotation: Math.floor(Math.random() * 8) - 4,
+                title: 'Judul Foto',
+                image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600',
+                content: 'Cerita panjang untuk foto ini...',
+                has_pin: true
+            });
+            saveCurrentBoardState();
+            renderCanvas();
+        };
+
+        document.getElementById('tool-add-note').onclick = () => {
+            currentBoard.items.push({
+                id: 'item_' + Date.now(),
+                type: 'note',
+                x: 320, y: 220,
+                rotation: Math.floor(Math.random() * 8) - 4,
+                title: 'Catatan Baru',
+                content: 'Tuliskan jurnal impian di sini...',
+                has_pin: true
+            });
+            saveCurrentBoardState();
+            renderCanvas();
+        };
+
+        document.getElementById('tool-add-checklist').onclick = () => {
+            currentBoard.items.push({
+                id: 'item_' + Date.now(),
+                type: 'checklist',
+                x: 340, y: 240,
+                rotation: 0,
+                title: 'TARGET BARU',
+                content: '☑ Target 1\n☑ Target 2',
+                has_pin: true
+            });
+            saveCurrentBoardState();
+            renderCanvas();
+        };
+
+        document.getElementById('tool-add-badge').onclick = () => {
+            currentBoard.items.push({
+                id: 'item_' + Date.now(),
+                type: 'badge',
+                x: 360, y: 260,
+                rotation: 0,
+                title: 'KATEGORI',
+                has_pin: true
+            });
+            saveCurrentBoardState();
+            renderCanvas();
+        };
+
+        document.getElementById('tool-add-sticker').onclick = () => {
+            currentBoard.items.push({
+                id: 'item_' + Date.now(),
+                type: 'sticker',
+                x: 380, y: 280,
+                rotation: 0,
+                title: '🌟 QUOTE BARU',
+                content: 'Catatan kecil di stiker...',
+                has_pin: true
+            });
+            saveCurrentBoardState();
+            renderCanvas();
+        };
+
+        const modalJournal = document.getElementById('modal-journal');
+
+        function openJournalModal(itemId) {
+            currentEditingItemId = itemId;
+            const item = currentBoard.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            document.getElementById('journal-title-input').value = item.title || '';
+            document.getElementById('journal-content-input').value = item.content || '';
+
+            const imgField = document.getElementById('journal-image-field');
+            if (item.type === 'polaroid') {
+                imgField.classList.remove('hidden');
+                document.getElementById('journal-image-input').value = item.image || '';
+            } else {
+                imgField.classList.add('hidden');
+            }
+
+            modalJournal.classList.remove('hidden');
+        }
+
+        document.getElementById('btn-close-journal').onclick = () => modalJournal.classList.add('hidden');
+
+        document.getElementById('btn-save-journal').onclick = () => {
+            const item = currentBoard.items.find(i => i.id === currentEditingItemId);
+            if (item) {
+                item.title = document.getElementById('journal-title-input').value;
+                item.content = document.getElementById('journal-content-input').value;
+                if (item.type === 'polaroid') {
+                    item.image = document.getElementById('journal-image-input').value;
+                }
+                saveCurrentBoardState();
+                renderCanvas();
+            }
+            modalJournal.classList.add('hidden');
+        };
+
+        document.getElementById('btn-delete-element').onclick = () => {
+            if (confirm('Hapus elemen ini?')) {
+                currentBoard.items = currentBoard.items.filter(i => i.id !== currentEditingItemId);
+                currentBoard.connections = currentBoard.connections.filter(c => c.from !== currentEditingItemId && c.to !== currentEditingItemId);
+                saveCurrentBoardState();
+                renderCanvas();
+                modalJournal.classList.add('hidden');
+            }
+        };
+
+        function saveCurrentBoardState() {
+            if (!currentBoard) return;
+            currentBoard.title = document.getElementById('editor-board-title').value || currentBoard.title;
+            saveData();
+        }
+
+        document.getElementById('btn-export-json-editor').onclick = () => {
+            saveCurrentBoardState();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentBoard, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `${currentBoard.title.toLowerCase().replace(/\s+/g, '_')}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        };
+
+        const btnImportDash = document.getElementById('btn-import-dash');
+        const fileImportInput = document.getElementById('file-import-input');
+
+        btnImportDash.onclick = () => fileImportInput.click();
+        fileImportInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.items && Array.isArray(data.items)) {
+                        data.id = 'board_' + Date.now();
+                        boards.push(data);
+                        saveData();
+                        renderDashboard();
+                        alert('Berhasil mengimpor Vision Board!');
+                    }
+                } catch(err) {
+                    alert('Gagal membaca file JSON.');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        loadData();
+        renderDashboard();
+    </script>
+</body>
+</html>
