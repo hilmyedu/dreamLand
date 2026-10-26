@@ -60,9 +60,8 @@
             user-select: none;
         }
 
-        /* Tombol Aksi Selalu Muncul di HP, dan Hover di Desktop */
         .hover-actions {
-            opacity: 1; /* Selalu tampil di HP agar mudah diklik */
+            opacity: 1;
             transition: opacity 0.2s ease;
         }
         @media (min-width: 768px) {
@@ -413,6 +412,10 @@
         let isPanning = false;
         let startPanX = 0, startPanY = 0;
 
+        // Variabel untuk melacak Pinch-to-Zoom di Touchscreen
+        let initialPinchDistance = null;
+        let startPinchScale = 1;
+
         const zoomPanLayer = document.getElementById('zoom-pan-layer');
         const zoomText = document.getElementById('zoom-level-text');
         const canvasWrapper = document.getElementById('editor-canvas-wrapper');
@@ -438,7 +441,6 @@
             updateTransform();
         }
 
-        // Support Mouse Wheel & Touch Pinch Zoom
         canvasWrapper.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasWrapper.getBoundingClientRect();
@@ -449,21 +451,64 @@
             setZoom(scale * delta, mouseX, mouseY);
         }, { passive: false });
 
-        // Panning Support Mouse & Touch
+        // Touch handlers untuk Panning (1 Jari) & Pinch-to-Zoom (2 Jari ala Kamera HP)
+        canvasWrapper.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
+
+            if (e.touches.length === 2) {
+                // Mulai Pinch Zoom
+                isPanning = false;
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                startPinchScale = scale;
+            } else if (e.touches.length === 1) {
+                // Mulai Geser Kanvas (Pan)
+                isPanning = true;
+                startPanX = e.touches[0].clientX - panX;
+                startPanY = e.touches[0].clientY - panY;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && initialPinchDistance !== null) {
+                // Proses Pinch-to-Zoom
+                e.preventDefault();
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const zoomFactor = currentDistance / initialPinchDistance;
+                
+                const rect = canvasWrapper.getBoundingClientRect();
+                const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+
+                setZoom(startPinchScale * zoomFactor, centerX, centerY);
+            } else if (isPanning && e.touches.length === 1) {
+                // Proses Geser Kanvas
+                panX = e.touches[0].clientX - startPanX;
+                panY = e.touches[0].clientY - startPanY;
+                updateTransform();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                initialPinchDistance = null;
+            }
+            if (e.touches.length === 0) {
+                isPanning = false;
+            }
+        });
+
+        // Mouse Panning Support (Desktop)
         canvasWrapper.addEventListener('mousedown', (e) => {
             if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
             isPanning = true;
             startPanX = e.clientX - panX;
             startPanY = e.clientY - panY;
-        });
-
-        canvasWrapper.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
-            if (e.touches.length === 1) {
-                isPanning = true;
-                startPanX = e.touches[0].clientX - panX;
-                startPanY = e.touches[0].clientY - panY;
-            }
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -473,15 +518,7 @@
             updateTransform();
         });
 
-        document.addEventListener('touchmove', (e) => {
-            if (!isPanning || e.touches.length !== 1) return;
-            panX = e.touches[0].clientX - startPanX;
-            panY = e.touches[0].clientY - startPanY;
-            updateTransform();
-        });
-
         document.addEventListener('mouseup', () => { isPanning = false; });
-        document.addEventListener('touchend', () => { isPanning = false; });
 
         document.getElementById('btn-zoom-in').onclick = () => {
             const rect = canvasWrapper.getBoundingClientRect();
@@ -814,7 +851,6 @@
             }
         }
 
-        // DUA SUPORT MOUSE & TOUCH DRAGGING
         function makeDraggableOrTouch(el, item) {
             let isDragging = false, startX, startY, initX, initY;
 
