@@ -32,8 +32,8 @@
         }
 
         .pushpin {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background: radial-gradient(circle at 35% 35%, #ff4d4d, #990000);
             border-radius: 50%;
             box-shadow: 1px 3px 5px rgba(0,0,0,0.3);
@@ -60,18 +60,35 @@
             user-select: none;
         }
 
+        /* Tombol Aksi Selalu Muncul di HP, dan Hover di Desktop */
+        .hover-actions {
+            opacity: 1; /* Selalu tampil di HP agar mudah diklik */
+            transition: opacity 0.2s ease;
+        }
+        @media (min-width: 768px) {
+            .hover-actions {
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(4px);
+            }
+            .board-item:hover .hover-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+        }
+
         .paper-shadow {
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
         }
 
-        /* Smooth transform container for zoom & pan */
         #zoom-pan-layer {
             transform-origin: 0 0;
             will-change: transform;
         }
 
         @media print {
-            header, #view-dashboard, .no-print, .zoom-controls { display: none !important; }
+            header, #view-dashboard, .no-print, .zoom-controls, .hover-actions { display: none !important; }
             #view-editor { display: block !important; height: auto !important; }
             .board-item { break-inside: avoid; }
         }
@@ -85,131 +102,113 @@
 
     <div id="app" class="h-full w-full flex flex-col">
 
-        <!-- ========================================== -->
-        <!-- VIEW 1: DASHBOARD LIST BOARD               -->
-        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD -->
         <div id="view-dashboard" class="h-full w-full flex flex-col overflow-y-auto">
-            <header class="h-20 bg-white border-b border-amber-100/80 px-8 flex items-center justify-between shrink-0 shadow-sm">
+            <header class="h-20 bg-white border-b border-amber-100/80 px-4 md:px-8 flex items-center justify-between shrink-0 shadow-sm">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow">
                         VB
                     </div>
                     <div>
-                        <h1 class="font-bold text-xl text-slate-800 tracking-tight">CraftBoard</h1>
-                        <p class="text-xs text-slate-400">Scrapbook & Vision Board Creator</p>
+                        <h1 class="font-bold text-lg md:text-xl text-slate-800 tracking-tight">CraftBoard</h1>
+                        <p class="text-[10px] md:text-xs text-slate-400">Scrapbook & Vision Board Creator</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <button id="btn-import-dash" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs transition">
-                        ↑ Import JSON
+                <div class="flex items-center gap-2">
+                    <button id="btn-import-dash" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs transition">
+                        ↑ Import
                     </button>
                     <input type="file" id="file-import-input" accept=".json" class="hidden">
                     
-                    <button id="btn-create-board" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow transition">
+                    <button id="btn-create-board" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow transition">
                         + Board Baru
                     </button>
                 </div>
             </header>
 
-            <main class="max-w-6xl mx-auto w-full p-8 space-y-8">
-                <div class="bg-[#f7f2e7] border border-amber-200/60 rounded-3xl p-8 relative overflow-hidden shadow-sm">
-                    <div class="inline-block bg-amber-200/60 text-amber-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">
+            <main class="max-w-6xl mx-auto w-full p-4 md:p-8 space-y-6">
+                <div class="bg-[#f7f2e7] border border-amber-200/60 rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-sm">
+                    <div class="inline-block bg-amber-200/60 text-amber-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3">
                         KOLEKSI DREAM BOARD
                     </div>
-                    <h2 class="text-4xl font-bold font-serif-title text-slate-900 mb-3">
+                    <h2 class="text-2xl md:text-4xl font-bold font-serif-title text-slate-900 mb-2">
                         Visualisasikan Impian & Goals Kamu
                     </h2>
-                    <p class="text-slate-600 max-w-2xl text-sm leading-relaxed">
+                    <p class="text-slate-600 max-w-2xl text-xs md:text-sm leading-relaxed">
                         Buat *scrapbook digital* dengan gaya estetik polaroid, kliping kertas, catat target, dan hubungkan ide-ide impianmu dalam bentuk vision board interaktif.
                     </p>
-                    <div class="tape w-24 h-6 -top-2 right-12 rotate-3"></div>
                 </div>
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <span class="text-amber-600 text-lg">🗂️</span>
-                        <h3 class="font-bold text-slate-800 text-lg">Daftar Board Impian</h3>
+                        <span class="text-amber-600 text-base">🗂️</span>
+                        <h3 class="font-bold text-slate-800 text-base md:text-lg">Daftar Board Impian</h3>
                     </div>
                     <span id="board-count-badge" class="bg-amber-200/60 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
                         1 Board
                     </span>
                 </div>
 
-                <div id="boards-list-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                <div id="boards-list-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
             </main>
         </div>
 
 
-        <!-- ========================================== -->
-        <!-- VIEW 2: CANVAS EDITOR DENGAN ZOOM & PAN    -->
-        <!-- ========================================== -->
+        <!-- VIEW 2: CANVAS EDITOR -->
         <div id="view-editor" class="h-full w-full flex flex-col hidden">
-            <!-- Header Action Toolbar -->
-            <header class="bg-white border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 z-50 shrink-0 shadow-sm no-print">
-                <!-- Left Title -->
-                <div class="flex items-center gap-4">
-                    <input type="text" id="editor-board-title" class="font-bold text-lg font-serif-title text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-600 focus:bg-white px-1 outline-none transition" value="2026 Vision Board">
-                    <span class="text-[11px] text-slate-400 font-medium">Auto-saved</span>
+            <header class="bg-white border-b border-slate-200 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 z-50 shrink-0 shadow-sm no-print">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="editor-board-title" class="font-bold text-base md:text-lg font-serif-title text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-600 focus:bg-white px-1 outline-none transition w-40 md:w-auto" value="2026 Vision Board">
                 </div>
 
-                <!-- Center Adding Tools -->
-                <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto">
-                    <button id="tool-add-polaroid" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto max-w-full">
+                    <button id="tool-add-polaroid" class="px-2 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 shrink-0 transition">
                         <span>🖼️</span> + Polaroid
                     </button>
-                    <button id="tool-add-note" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                    <button id="tool-add-note" class="px-2 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 shrink-0 transition">
                         <span>📄</span> + Catatan
                     </button>
-                    <button id="tool-add-checklist" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                    <button id="tool-add-checklist" class="px-2 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 shrink-0 transition">
                         <span>☑️</span> + Checklist
                     </button>
-                    <button id="tool-add-badge" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                    <button id="tool-add-badge" class="px-2 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 shrink-0 transition">
                         <span>🏷️</span> + Kategori
                     </button>
-                    <button id="tool-add-sticker" class="px-2.5 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 transition">
+                    <button id="tool-add-sticker" class="px-2 py-1.5 bg-white hover:bg-amber-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 flex items-center gap-1 shrink-0 transition">
                         <span>😀</span> + Stiker
                     </button>
-                    <div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
-                    <button id="tool-toggle-string" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-medium flex items-center gap-1 transition">
-                        <span>📍</span> Mode Benang
+                    <button id="tool-toggle-string" class="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-medium flex items-center gap-1 shrink-0 transition">
+                        <span>📍</span> Benang
                     </button>
                 </div>
 
-                <!-- Right Action Buttons -->
                 <div class="flex items-center gap-2">
-                    <button id="btn-back-dash" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl transition">
-                        ← Kembali ke Daftar
+                    <button id="btn-back-dash" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl transition">
+                        ← Daftar
                     </button>
-                    <button id="btn-export-json-editor" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium text-xs rounded-xl transition">
-                        ↓ Export JSON
-                    </button>
-                    <button onclick="window.print()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium text-xs rounded-xl transition">
-                        🖨️ Cetak / PDF
+                    <button id="btn-export-json-editor" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium text-xs rounded-xl transition">
+                        ↓ JSON
                     </button>
                 </div>
             </header>
 
-            <!-- Canvas Workspace Area -->
             <main id="editor-canvas-wrapper" class="flex-1 relative overflow-hidden canvas-bg cursor-grab active:cursor-grabbing">
-                <!-- Zoom & Pan Container Transform Layer -->
                 <div id="zoom-pan-layer" class="absolute inset-0" style="width: 4000px; height: 3000px;">
                     <svg id="svg-thread-layer" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
                     <div id="editor-canvas" class="relative w-full h-full"></div>
                 </div>
 
-                <!-- Floating Zoom Controller Buttons -->
-                <div class="zoom-controls absolute bottom-6 right-6 z-50 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-1.5 shadow-lg flex items-center gap-1 no-print">
-                    <button id="btn-zoom-out" title="Zoom Out (-)" class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700 hover:text-amber-800 transition">
+                <div class="zoom-controls absolute bottom-4 right-4 z-50 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-1 shadow-lg flex items-center gap-1 no-print">
+                    <button id="btn-zoom-out" class="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700">
                         −
                     </button>
-                    <span id="zoom-level-text" class="text-xs font-bold text-slate-700 px-2 min-w-[45px] text-center">100%</span>
-                    <button id="btn-zoom-in" title="Zoom In (+)" class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700 hover:text-amber-800 transition">
+                    <span id="zoom-level-text" class="text-xs font-bold text-slate-700 px-1.5 text-center">100%</span>
+                    <button id="btn-zoom-in" class="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-amber-50 rounded-xl font-bold text-slate-700">
                         +
                     </button>
-                    <div class="h-4 w-[1px] bg-slate-200 mx-1"></div>
-                    <button id="btn-zoom-reset" title="Reset Tampilan (100%)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
-                        🔍 100%
+                    <button id="btn-zoom-reset" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] rounded-xl ml-1">
+                        Reset
                     </button>
                 </div>
             </main>
@@ -218,41 +217,67 @@
     </div>
 
 
-    <!-- ========================================== -->
-    <!-- MODAL POPUP: DETAIL / CERITA PANJANG       -->
-    <!-- ========================================== -->
-    <div id="modal-journal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden no-print">
-        <div class="bg-[#fcfaf5] border border-amber-200 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden relative">
-            <div class="px-6 py-4 bg-amber-100/50 border-b border-amber-200/60 flex items-center justify-between">
+    <!-- MODAL EDIT ELEMEN -->
+    <div id="modal-edit-element" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[100] flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
                 <div class="flex items-center gap-2">
-                    <span class="text-xl">📖</span>
-                    <h3 class="font-bold text-lg font-serif-title text-slate-800">Detail & Cerita Impian</h3>
-                </div>
-                <button id="btn-close-journal" class="text-slate-400 hover:text-slate-700 font-bold text-xl">×</button>
-            </div>
-
-            <div class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Judul / Ringkasan Depan</label>
-                    <input type="text" id="journal-title-input" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-amber-600">
-                </div>
-
-                <div id="journal-image-field" class="hidden">
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">URL Gambar Polaroid</label>
-                    <input type="text" id="journal-image-input" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-amber-600" placeholder="https://...">
+                    <span class="text-amber-600 text-xl">✏️</span>
+                    <h3 class="font-bold text-xl text-slate-800">Edit Elemen</h3>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cerita Panjang / Rencana Aksi / Refleksi</label>
-                    <textarea id="journal-content-input" rows="7" class="w-full p-4 bg-white border border-slate-200 rounded-xl font-kalam text-slate-800 text-lg leading-relaxed focus:outline-none focus:border-amber-600 shadow-inner" placeholder="Tuliskan cerita lengkap dari impian ini..."></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Teks / Judul Depan</label>
+                    <textarea id="edit-item-title-input" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-600" placeholder="Tuliskan kata-kata / impian..."></textarea>
+                </div>
+
+                <div id="edit-checklist-container" class="hidden">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600">Daftar Poin Target (Bisa Dicentang)</label>
+                        <button id="btn-add-checklist-item" type="button" class="text-xs text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                            + Tambah Target
+                        </button>
+                    </div>
+                    <div id="checklist-editor-items-list" class="space-y-2 max-h-36 overflow-y-auto p-1 bg-slate-50 border border-slate-200 rounded-xl"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Warna / Tema</label>
+                    <select id="edit-item-theme-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-600">
+                        <option value="white">Putih Bersih</option>
+                        <option value="yellow">Kuning Kertas Catatan</option>
+                        <option value="kraft">Cokelat Kraf / Vintage</option>
+                        <option value="pink">Pink Soft</option>
+                        <option value="blue">Biru Muda</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-slate-600">Rotasi (Derajat)</label>
+                        <span id="rotation-val-text" class="text-xs text-slate-500 font-medium">0°</span>
+                    </div>
+                    <input type="range" id="edit-item-rotation-input" min="-30" max="30" value="0" class="w-full accent-amber-600">
+                </div>
+
+                <div id="edit-image-group" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">URL Gambar Polaroid</label>
+                    <input type="text" id="edit-item-image-input" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-amber-600" placeholder="https://...">
+                </div>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <span>📖</span> Cerita Panjang / Catatan Jurnal
+                    </label>
+                    <textarea id="edit-item-story-input" rows="3" class="w-full p-3 bg-amber-50/50 border border-amber-200 rounded-xl font-kalam text-slate-800 text-base focus:outline-none focus:border-amber-600" placeholder="Tuliskan cerita lengkap dari impian ini..."></textarea>
                 </div>
             </div>
 
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-                <button id="btn-delete-element" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-xl text-xs transition mr-auto">
-                    🗑️ Hapus Elemen
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                <button id="btn-cancel-edit" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl">
+                    Batal
                 </button>
-                <button id="btn-save-journal" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-xs transition shadow">
+                <button id="btn-save-edit" class="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl shadow">
                     Simpan Perubahan
                 </button>
             </div>
@@ -261,7 +286,6 @@
 
 
     <script>
-        // PRESET DATA PERTAMA KALI
         const INITIAL_DATA = [
             {
                 id: "board_2026",
@@ -280,7 +304,8 @@
                     {
                         id: "item_center_main",
                         type: "center_board",
-                        x: 350, y: 460, rotation: -1,
+                        theme: "white",
+                        x: 500, y: 400, rotation: -1,
                         title: "2026 VISION BOARD",
                         content: "Tahun ini adalah tahun untuk tumbuh, belajar hal baru, menjaga kesehatan tubuh, dan mewujudkan impian besar satu per satu!",
                         has_pin: true
@@ -288,6 +313,7 @@
                     {
                         id: "item_cat_learning",
                         type: "badge",
+                        theme: "kraft",
                         x: 180, y: 40, rotation: -2,
                         title: "LEARNING",
                         content: "Target pembelajaran harian dan pengembangan skill.",
@@ -296,6 +322,7 @@
                     {
                         id: "item_cat_career",
                         type: "badge",
+                        theme: "kraft",
                         x: 530, y: 35, rotation: 3,
                         title: "CAREER",
                         content: "Pencapaian karir dan proyek passion.",
@@ -304,6 +331,7 @@
                     {
                         id: "item_cat_health",
                         type: "badge",
+                        theme: "kraft",
                         x: 180, y: 520, rotation: -3,
                         title: "HEALTH",
                         content: "Menjaga kesehatan fisik dan pikiran.",
@@ -312,6 +340,7 @@
                     {
                         id: "item_photo_cam",
                         type: "polaroid",
+                        theme: "white",
                         x: 130, y: 110, rotation: -6,
                         title: "Learn photography and video editing",
                         image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600",
@@ -321,6 +350,7 @@
                     {
                         id: "item_note_growing",
                         type: "note",
+                        theme: "yellow",
                         x: 340, y: 130, rotation: -3,
                         title: "Keep learning, keep growing.",
                         content: "Jangan pernah berhenti mencoba hal baru dan bertumbuh setiap harinya.",
@@ -329,14 +359,20 @@
                     {
                         id: "item_checklist_career",
                         type: "checklist",
+                        theme: "yellow",
                         x: 540, y: 120, rotation: 3,
                         title: "CAREER GOALS",
-                        content: "☑ Build one personal passion project\n☑ Attend 1 professional workshop per month",
+                        checklist_items: [
+                            { text: "Build one personal passion project", completed: true },
+                            { text: "Attend 1 professional workshop per month", completed: false }
+                        ],
+                        content: "Detail catatan tambahan mengenai target karir...",
                         has_pin: true
                     },
                     {
                         id: "item_photo_work",
                         type: "polaroid",
+                        theme: "white",
                         x: 550, y: 370, rotation: 5,
                         title: "Focused & creative work space",
                         image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=600",
@@ -346,6 +382,7 @@
                     {
                         id: "item_sticker_1",
                         type: "sticker",
+                        theme: "white",
                         x: 470, y: 550, rotation: -4,
                         title: "😀 DO MORE OF WHAT YOU LOVE",
                         content: "Lakukan lebih banyak hal yang membuat hatimu merasa hidup.",
@@ -354,6 +391,7 @@
                     {
                         id: "item_sticker_2",
                         type: "sticker",
+                        theme: "white",
                         x: 730, y: 260, rotation: 2,
                         title: "🌟 CHERISH EVERY LITTLE MOMENT",
                         content: "Hargai setiap proses dan momen kecil dalam hidup.",
@@ -367,8 +405,8 @@
         let currentBoard = null;
         let activeConnectingPinId = null;
         let currentEditingItemId = null;
+        let tempChecklistItems = [];
 
-        // ZOOM & PAN STATE
         let scale = 1;
         let panX = 0;
         let panY = 0;
@@ -400,7 +438,7 @@
             updateTransform();
         }
 
-        // Mouse Wheel Zoom
+        // Support Mouse Wheel & Touch Pinch Zoom
         canvasWrapper.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasWrapper.getBoundingClientRect();
@@ -411,12 +449,21 @@
             setZoom(scale * delta, mouseX, mouseY);
         }, { passive: false });
 
-        // Panning Canvas Drag
+        // Panning Support Mouse & Touch
         canvasWrapper.addEventListener('mousedown', (e) => {
             if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
             isPanning = true;
             startPanX = e.clientX - panX;
             startPanY = e.clientY - panY;
+        });
+
+        canvasWrapper.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.board-item') || e.target.closest('.zoom-controls')) return;
+            if (e.touches.length === 1) {
+                isPanning = true;
+                startPanX = e.touches[0].clientX - panX;
+                startPanY = e.touches[0].clientY - panY;
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -426,11 +473,16 @@
             updateTransform();
         });
 
-        document.addEventListener('mouseup', () => {
-            isPanning = false;
+        document.addEventListener('touchmove', (e) => {
+            if (!isPanning || e.touches.length !== 1) return;
+            panX = e.touches[0].clientX - startPanX;
+            panY = e.touches[0].clientY - startPanY;
+            updateTransform();
         });
 
-        // Zoom Buttons
+        document.addEventListener('mouseup', () => { isPanning = false; });
+        document.addEventListener('touchend', () => { isPanning = false; });
+
         document.getElementById('btn-zoom-in').onclick = () => {
             const rect = canvasWrapper.getBoundingClientRect();
             setZoom(scale * 1.2, rect.width / 2, rect.height / 2);
@@ -444,7 +496,6 @@
             updateTransform();
         };
 
-        // Storage Management
         function loadData() {
             const saved = localStorage.getItem('craftboard_app_v2');
             if (saved) {
@@ -514,12 +565,23 @@
         }
 
         function createNewBoard() {
+            const newBoardId = 'board_' + Date.now();
             const newBoard = {
-                id: 'board_' + Date.now(),
+                id: newBoardId,
                 title: 'Vision Board Baru ' + (boards.length + 1),
                 created_at: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
                 connections: [],
-                items: JSON.parse(JSON.stringify(INITIAL_DATA[0].items))
+                items: [
+                    {
+                        id: 'item_main_' + Date.now(),
+                        type: 'center_board',
+                        theme: 'white',
+                        x: 500, y: 400, rotation: 0,
+                        title: 'VISION BOARD BARU',
+                        content: 'Tuliskan visi dan target impianmu di sini...',
+                        has_pin: true
+                    }
+                ]
             };
             boards.push(newBoard);
             saveData();
@@ -555,79 +617,120 @@
         const editorCanvas = document.getElementById('editor-canvas');
         const svgThreadLayer = document.getElementById('svg-thread-layer');
 
+        function getThemeBgClass(theme) {
+            switch(theme) {
+                case 'yellow': return 'bg-[#fef3c7] border-amber-200';
+                case 'kraft': return 'bg-[#ebd9c1] border-amber-300';
+                case 'pink': return 'bg-pink-100 border-pink-200';
+                case 'blue': return 'bg-sky-100 border-sky-200';
+                default: return 'bg-white border-slate-200';
+            }
+        }
+
         function renderCanvas() {
             editorCanvas.innerHTML = '';
 
             currentBoard.items.forEach(item => {
                 const wrapper = document.createElement('div');
-                wrapper.className = 'board-item';
+                wrapper.className = 'board-item group';
                 wrapper.id = item.id;
                 wrapper.style.left = item.x + 'px';
                 wrapper.style.top = item.y + 'px';
                 wrapper.style.transform = `rotate(${item.rotation || 0}deg)`;
 
+                const themeBg = getThemeBgClass(item.theme || 'white');
+
+                const hoverActionsHtml = `
+                    <div class="hover-actions absolute -top-3 right-2 z-40 flex items-center gap-1 bg-white/95 backdrop-blur shadow-md border border-slate-200 rounded-lg p-0.5">
+                        <button onclick="openEditModal('${item.id}')" title="Edit Elemen" class="p-1 text-slate-600 hover:text-amber-700 hover:bg-slate-100 rounded transition">
+                            ✏️
+                        </button>
+                        <button onclick="deleteElement('${item.id}')" title="Hapus" class="p-1 text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded transition">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+
                 let html = '';
 
                 if (item.type === 'polaroid') {
                     html = `
-                        <div class="bg-white p-3 pt-4 pb-4 rounded shadow-md paper-shadow w-56 border border-slate-100 relative">
+                        <div class="${themeBg} p-3 pt-4 pb-4 rounded shadow-md paper-shadow w-56 relative">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
                             <div class="tape w-16 h-4 -top-3 left-4 rotate-[-4deg]"></div>
                             <div class="w-full h-40 bg-slate-100 overflow-hidden mb-2.5 rounded-sm border border-slate-200">
                                 <img src="${item.image || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600'}" class="w-full h-full object-cover pointer-events-none" alt="polaroid">
                             </div>
                             <h4 class="font-handwriting text-xl text-slate-800 text-center font-bold px-1 mb-1 leading-tight">${item.title}</h4>
-                            <button onclick="openJournalModal('${item.id}')" class="w-full py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded text-[10px] font-semibold transition">
-                                📖 Baca Cerita
+                            <button onclick="openEditModal('${item.id}')" class="w-full py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded text-[10px] font-semibold transition">
+                                📖 Baca / Edit Cerita
                             </button>
                         </div>
                     `;
                 } else if (item.type === 'note') {
                     html = `
-                        <div class="bg-[#fef3c7] p-4 rounded-sm shadow-md paper-shadow w-56 border border-amber-200 relative">
+                        <div class="${themeBg} p-4 rounded-sm shadow-md paper-shadow w-56 relative border">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
                             <div class="tape w-16 h-4 -top-3 right-4 rotate-[3deg]"></div>
                             <h4 class="font-kalam font-bold text-lg text-slate-800 leading-snug mb-2">${item.title}</h4>
-                            <button onclick="openJournalModal('${item.id}')" class="text-[11px] text-amber-900 underline font-semibold block">
+                            <button onclick="openEditModal('${item.id}')" class="text-[11px] text-amber-900 underline font-semibold block">
                                 📖 Detail Cerita
                             </button>
                         </div>
                     `;
                 } else if (item.type === 'center_board') {
                     html = `
-                        <div class="bg-white/90 backdrop-blur p-6 rounded-md shadow-lg border-2 border-dashed border-slate-300 w-80 text-center relative">
+                        <div class="${themeBg} p-6 rounded-md shadow-lg border-2 border-dashed border-slate-300 w-80 text-center relative">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
                             <div class="tape w-20 h-5 -top-3 left-6 rotate-[-2deg]"></div>
                             <div class="tape w-20 h-5 -top-3 right-6 rotate-[2deg]"></div>
                             <h2 class="font-serif-title font-bold text-2xl text-slate-900 mb-2 tracking-wide">${item.title}</h2>
-                            <button onclick="openJournalModal('${item.id}')" class="mt-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-semibold transition">
+                            <button onclick="openEditModal('${item.id}')" class="mt-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-semibold transition">
                                 📖 Jurnal Utama
                             </button>
                         </div>
                     `;
                 } else if (item.type === 'checklist') {
+                    const checkItems = item.checklist_items || [];
+                    const listHtml = checkItems.map((c, i) => `
+                        <div onclick="toggleChecklistCanvasItem('${item.id}', ${i})" class="flex items-start gap-2 cursor-pointer hover:bg-black/5 p-1 rounded transition">
+                            <input type="checkbox" ${c.completed ? 'checked' : ''} class="mt-0.5 accent-amber-600 pointer-events-none">
+                            <span class="font-kalam text-xs text-slate-800 leading-tight ${c.completed ? 'line-through text-slate-400' : ''}">
+                                ${c.text}
+                            </span>
+                        </div>
+                    `).join('');
+
                     html = `
-                        <div class="bg-white p-4 rounded-sm shadow-md paper-shadow w-56 border-t-4 border-amber-600 relative">
+                        <div class="${themeBg} p-4 rounded-sm shadow-md paper-shadow w-56 border-t-4 border-amber-600 relative border">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 right-4" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
                             <h4 class="font-bold text-slate-900 text-xs tracking-wide uppercase mb-2 border-b pb-1">${item.title}</h4>
-                            <div class="font-kalam text-xs text-slate-700 whitespace-pre-line leading-relaxed mb-2">${item.content}</div>
-                            <button onclick="openJournalModal('${item.id}')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition">
-                                📖 Detail
+                            <div class="space-y-1 mb-2">
+                                ${listHtml || '<p class="text-xs text-slate-400 italic">Belum ada target. Klik Edit!</p>'}
+                            </div>
+                            <button onclick="openEditModal('${item.id}')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition">
+                                📖 Detail / Edit
                             </button>
                         </div>
                     `;
                 } else if (item.type === 'badge') {
                     html = `
-                        <div class="bg-[#ebd9c1] text-slate-900 px-4 py-1.5 rounded font-bold text-xs shadow border border-amber-300/80 relative inline-block tracking-wider uppercase">
+                        <div class="${themeBg} text-slate-900 px-4 py-1.5 rounded font-bold text-xs shadow border relative inline-block tracking-wider uppercase">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 left-1/2 -translate-x-1/2" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
-                            <span onclick="openJournalModal('${item.id}')" class="cursor-pointer">${item.title}</span>
+                            <span onclick="openEditModal('${item.id}')" class="cursor-pointer">${item.title}</span>
                         </div>
                     `;
                 } else if (item.type === 'sticker') {
                     html = `
-                        <div class="bg-white/90 text-slate-800 px-3.5 py-1.5 rounded-full font-bold text-xs shadow-md border border-slate-300 relative inline-flex items-center gap-1 cursor-pointer">
+                        <div class="${themeBg} text-slate-800 px-3.5 py-1.5 rounded-full font-bold text-xs shadow-md border relative inline-flex items-center gap-1 cursor-pointer">
+                            ${hoverActionsHtml}
                             ${item.has_pin ? `<div class="pushpin -top-2 -left-1" onclick="handlePinClick(event, '${item.id}')"></div>` : ''}
-                            <span onclick="openJournalModal('${item.id}')">${item.title}</span>
+                            <span onclick="openEditModal('${item.id}')">${item.title}</span>
                         </div>
                     `;
                 }
@@ -635,10 +738,19 @@
                 wrapper.innerHTML = html;
                 editorCanvas.appendChild(wrapper);
 
-                makeDraggable(wrapper, item);
+                makeDraggableOrTouch(wrapper, item);
             });
 
             renderThreads();
+        }
+
+        function toggleChecklistCanvasItem(itemId, index) {
+            const item = currentBoard.items.find(i => i.id === itemId);
+            if (item && item.checklist_items && item.checklist_items[index]) {
+                item.checklist_items[index].completed = !item.checklist_items[index].completed;
+                saveCurrentBoardState();
+                renderCanvas();
+            }
         }
 
         function renderThreads() {
@@ -702,44 +814,54 @@
             }
         }
 
-        function makeDraggable(el, item) {
+        // DUA SUPORT MOUSE & TOUCH DRAGGING
+        function makeDraggableOrTouch(el, item) {
             let isDragging = false, startX, startY, initX, initY;
 
-            el.addEventListener('mousedown', (e) => {
-                if (e.target.closest('.pushpin') || e.target.tagName === 'BUTTON') return;
+            function startDrag(clientX, clientY, target) {
+                if (target.closest('.pushpin') || target.closest('.hover-actions') || target.tagName === 'BUTTON' || target.tagName === 'INPUT') return;
                 isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
+                startX = clientX;
+                startY = clientY;
                 initX = item.x;
                 initY = item.y;
+            }
 
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-
-            function onMouseMove(e) {
+            function moveDrag(clientX, clientY) {
                 if (!isDragging) return;
-                item.x = Math.max(0, initX + (e.clientX - startX) / scale);
-                item.y = Math.max(0, initY + (e.clientY - startY) / scale);
+                item.x = Math.max(0, initX + (clientX - startX) / scale);
+                item.y = Math.max(0, initY + (clientY - startY) / scale);
                 el.style.left = item.x + 'px';
                 el.style.top = item.y + 'px';
                 renderThreads();
             }
 
-            function onMouseUp() {
-                isDragging = false;
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                saveCurrentBoardState();
+            function endDrag() {
+                if (isDragging) {
+                    isDragging = false;
+                    saveCurrentBoardState();
+                }
             }
+
+            el.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY, e.target));
+            document.addEventListener('mousemove', (e) => { if (isDragging) moveDrag(e.clientX, e.clientY); });
+            document.addEventListener('mouseup', endDrag);
+
+            el.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY, e.target);
+            });
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging && e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+            });
+            document.addEventListener('touchend', endDrag);
         }
 
         document.getElementById('tool-add-polaroid').onclick = () => {
             currentBoard.items.push({
                 id: 'item_' + Date.now(),
                 type: 'polaroid',
-                x: 300, y: 200,
-                rotation: Math.floor(Math.random() * 8) - 4,
+                theme: 'white',
+                x: 300, y: 200, rotation: 0,
                 title: 'Judul Foto',
                 image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600',
                 content: 'Cerita panjang untuk foto ini...',
@@ -753,8 +875,8 @@
             currentBoard.items.push({
                 id: 'item_' + Date.now(),
                 type: 'note',
-                x: 320, y: 220,
-                rotation: Math.floor(Math.random() * 8) - 4,
+                theme: 'yellow',
+                x: 320, y: 220, rotation: 0,
                 title: 'Catatan Baru',
                 content: 'Tuliskan jurnal impian di sini...',
                 has_pin: true
@@ -767,10 +889,14 @@
             currentBoard.items.push({
                 id: 'item_' + Date.now(),
                 type: 'checklist',
-                x: 340, y: 240,
-                rotation: 0,
+                theme: 'yellow',
+                x: 340, y: 240, rotation: 0,
                 title: 'TARGET BARU',
-                content: '☑ Target 1\n☑ Target 2',
+                checklist_items: [
+                    { text: 'Target 1', completed: false },
+                    { text: 'Target 2', completed: false }
+                ],
+                content: 'Catatan tambahan target...',
                 has_pin: true
             });
             saveCurrentBoardState();
@@ -781,8 +907,8 @@
             currentBoard.items.push({
                 id: 'item_' + Date.now(),
                 type: 'badge',
-                x: 360, y: 260,
-                rotation: 0,
+                theme: 'kraft',
+                x: 360, y: 260, rotation: 0,
                 title: 'KATEGORI',
                 has_pin: true
             });
@@ -794,8 +920,8 @@
             currentBoard.items.push({
                 id: 'item_' + Date.now(),
                 type: 'sticker',
-                x: 380, y: 280,
-                rotation: 0,
+                theme: 'white',
+                x: 380, y: 280, rotation: 0,
                 title: '🌟 QUOTE BARU',
                 content: 'Catatan kecil di stiker...',
                 has_pin: true
@@ -804,52 +930,95 @@
             renderCanvas();
         };
 
-        const modalJournal = document.getElementById('modal-journal');
+        const modalEditElement = document.getElementById('modal-edit-element');
+        const rotInput = document.getElementById('edit-item-rotation-input');
+        const rotText = document.getElementById('rotation-val-text');
+        const checklistContainer = document.getElementById('edit-checklist-container');
+        const checklistItemsList = document.getElementById('checklist-editor-items-list');
 
-        function openJournalModal(itemId) {
+        rotInput.oninput = () => { rotText.textContent = `${rotInput.value}°`; };
+
+        function renderChecklistEditorRows() {
+            checklistItemsList.innerHTML = tempChecklistItems.map((c, idx) => `
+                <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200">
+                    <input type="checkbox" ${c.completed ? 'checked' : ''} onchange="tempChecklistItems[${idx}].completed = this.checked" class="accent-amber-600">
+                    <input type="text" value="${c.text}" oninput="tempChecklistItems[${idx}].text = this.value" class="flex-1 text-xs font-medium text-slate-800 outline-none" placeholder="Tuliskan poin target...">
+                    <button type="button" onclick="removeTempChecklistItem(${idx})" class="text-xs text-red-500 p-1">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('btn-add-checklist-item').onclick = () => {
+            tempChecklistItems.push({ text: 'Target baru', completed: false });
+            renderChecklistEditorRows();
+        };
+
+        function removeTempChecklistItem(idx) {
+            tempChecklistItems.splice(idx, 1);
+            renderChecklistEditorRows();
+        }
+
+        function openEditModal(itemId) {
             currentEditingItemId = itemId;
             const item = currentBoard.items.find(i => i.id === itemId);
             if (!item) return;
 
-            document.getElementById('journal-title-input').value = item.title || '';
-            document.getElementById('journal-content-input').value = item.content || '';
+            document.getElementById('edit-item-title-input').value = item.title || '';
+            document.getElementById('edit-item-theme-select').value = item.theme || 'white';
+            rotInput.value = item.rotation || 0;
+            rotText.textContent = `${item.rotation || 0}°`;
+            document.getElementById('edit-item-story-input').value = item.content || '';
 
-            const imgField = document.getElementById('journal-image-field');
+            const imgGrp = document.getElementById('edit-image-group');
             if (item.type === 'polaroid') {
-                imgField.classList.remove('hidden');
-                document.getElementById('journal-image-input').value = item.image || '';
+                imgGrp.classList.remove('hidden');
+                document.getElementById('edit-item-image-input').value = item.image || '';
             } else {
-                imgField.classList.add('hidden');
+                imgGrp.classList.add('hidden');
             }
 
-            modalJournal.classList.remove('hidden');
+            if (item.type === 'checklist') {
+                checklistContainer.classList.remove('hidden');
+                tempChecklistItems = JSON.parse(JSON.stringify(item.checklist_items || []));
+                renderChecklistEditorRows();
+            } else {
+                checklistContainer.classList.add('hidden');
+            }
+
+            modalEditElement.classList.remove('hidden');
         }
 
-        document.getElementById('btn-close-journal').onclick = () => modalJournal.classList.add('hidden');
+        document.getElementById('btn-cancel-edit').onclick = () => { modalEditElement.classList.add('hidden'); };
 
-        document.getElementById('btn-save-journal').onclick = () => {
+        document.getElementById('btn-save-edit').onclick = () => {
             const item = currentBoard.items.find(i => i.id === currentEditingItemId);
             if (item) {
-                item.title = document.getElementById('journal-title-input').value;
-                item.content = document.getElementById('journal-content-input').value;
+                item.title = document.getElementById('edit-item-title-input').value;
+                item.theme = document.getElementById('edit-item-theme-select').value;
+                item.rotation = parseInt(rotInput.value, 10) || 0;
+                item.content = document.getElementById('edit-item-story-input').value;
+
                 if (item.type === 'polaroid') {
-                    item.image = document.getElementById('journal-image-input').value;
+                    item.image = document.getElementById('edit-item-image-input').value;
                 }
+                if (item.type === 'checklist') {
+                    item.checklist_items = JSON.parse(JSON.stringify(tempChecklistItems));
+                }
+
                 saveCurrentBoardState();
                 renderCanvas();
             }
-            modalJournal.classList.add('hidden');
+            modalEditElement.classList.add('hidden');
         };
 
-        document.getElementById('btn-delete-element').onclick = () => {
+        function deleteElement(itemId) {
             if (confirm('Hapus elemen ini?')) {
-                currentBoard.items = currentBoard.items.filter(i => i.id !== currentEditingItemId);
-                currentBoard.connections = currentBoard.connections.filter(c => c.from !== currentEditingItemId && c.to !== currentEditingItemId);
+                currentBoard.items = currentBoard.items.filter(i => i.id !== itemId);
+                currentBoard.connections = currentBoard.connections.filter(c => c.from !== itemId && c.to !== itemId);
                 saveCurrentBoardState();
                 renderCanvas();
-                modalJournal.classList.add('hidden');
             }
-        };
+        }
 
         function saveCurrentBoardState() {
             if (!currentBoard) return;
